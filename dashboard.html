@@ -1,45 +1,96 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Parking Dashboard</title>
+    <title>Smart Parking Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
 
-<h2>🚗 Smart Parking Dashboard</h2>
+<h2>🚗 Smart Automatic Parking System</h2>
 
 <a href="/entry"><button class="btn">Vehicle Entry</button></a>
 <a href="/exit"><button class="btn">Vehicle Exit</button></a>
 
+<!-- 🚗 CAR ANIMATION -->
+<div class="road">
+    <div class="car" id="car">🚗</div>
+</div>
+
+<!-- 📊 FLOOR STATUS -->
 <div class="container">
 
 {% for floor, types in data.floors.items() %}
     <div class="card">
         <h3>Floor {{floor}}</h3>
 
-        <p>2W: 
+        <p>2 Wheeler:
         <span class="{{ 'free' if types['2W'] > 0 else 'full' }}">
             {{types["2W"]}}
         </span>
         </p>
 
-        <p>4W: 
+        <p>4 Wheeler:
         <span class="{{ 'free' if types['4W'] > 0 else 'full' }}">
             {{types["4W"]}}
         </span>
         </p>
+
     </div>
 {% endfor %}
 
 </div>
 
+<!-- 🧭 DIRECTION SYSTEM -->
 <h3>Direction Guidance</h3>
 
 <div>
-    <span class="arrow">⬅️ LEFT</span>
-    <span class="arrow">⬆️ STRAIGHT</span>
-    <span class="arrow">➡️ RIGHT</span>
+    <span class="arrow"
+    style="color: {{ 'green' if directions['LEFT'] > 0 else 'red' }}">
+        ⬅️ LEFT
+    </span>
+
+    <span class="arrow"
+    style="color: {{ 'green' if directions['STRAIGHT'] > 0 else 'red' }}">
+        ⬆️ STRAIGHT
+    </span>
+
+    <span class="arrow"
+    style="color: {{ 'green' if directions['RIGHT'] > 0 else 'red' }}">
+        ➡️ RIGHT
+    </span>
 </div>
+
+<!-- 🧾 QUEUE DISPLAY -->
+<h3>Waiting Queue</h3>
+
+{% if data.queue %}
+    {% for v in data.queue %}
+        <p>🚗 {{v}}</p>
+    {% endfor %}
+{% else %}
+    <p>No vehicles waiting</p>
+{% endif %}
+
+<!-- 🧠 CAR DIRECTION LOGIC -->
+<script>
+    let directions = {{ directions | tojson }};
+    let car = document.getElementById("car");
+
+    let best = Object.keys(directions).reduce((a, b) =>
+        directions[a] > directions[b] ? a : b
+    );
+
+    if (best === "LEFT") {
+        car.style.transform = "rotate(-20deg)";
+    } 
+    else if (best === "RIGHT") {
+        car.style.transform = "rotate(20deg)";
+    } 
+    else {
+        car.style.transform = "rotate(0deg)";
+    }
+</script>
 
 </body>
 </html>
