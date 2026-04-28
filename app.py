@@ -4,7 +4,7 @@ import datetime
 
 app = Flask(__name__)
 
-# Load parking data
+# 📂 Load data
 def load_data():
     try:
         with open("parking_data.json", "r") as f:
@@ -15,27 +15,37 @@ def load_data():
                 "1": {"2W": 5, "4W": 5},
                 "2": {"2W": 5, "4W": 5}
             },
-            "tickets": {}
+            "tickets": {},
+            "queue": []
         }
 
+# 💾 Save data
 def save_data(data):
     with open("parking_data.json", "w") as f:
         json.dump(data, f, indent=4)
 
-# LOGIN
+# 🔐 LOGIN
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         return redirect("/dashboard")
     return render_template("login.html")
 
-# DASHBOARD
+# 🖥️ DASHBOARD
 @app.route("/dashboard")
 def dashboard():
     data = load_data()
-    return render_template("dashboard.html", data=data)
 
-# ENTRY
+    # 🧭 Direction logic
+    directions = {
+        "LEFT": data["floors"]["1"]["4W"],
+        "STRAIGHT": data["floors"]["2"]["4W"],
+        "RIGHT": data["floors"]["1"]["2W"]
+    }
+
+    return render_template("dashboard.html", data=data, directions=directions)
+
+# 🚗 ENTRY (Queue + Ticket)
 @app.route("/entry", methods=["GET", "POST"])
 def entry():
     data = load_data()
@@ -44,11 +54,21 @@ def entry():
         vehicle = request.form["vehicle"]
         vtype = request.form["type"]
 
+        # ➕ Add to queue
+        data["queue"].append(vehicle)
+
+        # ⏳ Check if first
+        if data["queue"][0] != vehicle:
+            save_data(data)
+            return f"Wait! Queue position: {len(data['queue'])}"
+
+        # 🅿️ Allocate slot
         for floor in data["floors"]:
             if data["floors"][floor][vtype] > 0:
                 data["floors"][floor][vtype] -= 1
 
                 ticket_id = str(len(data["tickets"]) + 1)
+
                 data["tickets"][ticket_id] = {
                     "vehicle": vehicle,
                     "type": vtype,
@@ -56,14 +76,18 @@ def entry():
                     "time": str(datetime.datetime.now())
                 }
 
-                save_data(data)
-                return f"Ticket Generated: {ticket_id}, Floor: {floor}"
+                # ❌ Remove from queue
+                data["queue"].pop(0)
 
-        return "Parking Full!"
+                save_data(data)
+
+                return f"✅ Ticket: {ticket_id} | Floor: {floor}"
+
+        return "❌ Parking Full!"
 
     return render_template("entry.html")
 
-# EXIT
+# 🚪 EXIT
 @app.route("/exit", methods=["GET", "POST"])
 def exit():
     data = load_data()
@@ -73,13 +97,18 @@ def exit():
 
         if ticket_id in data["tickets"]:
             info = data["tickets"].pop(ticket_id)
+
+            # 🔄 Free slot
             data["floors"][info["floor"]][info["type"]] += 1
 
             save_data(data)
-            return "Exit Successful!"
 
-        return "Invalid Ticket!"
+            return "✅ Exit Successful!"
+
+        return "❌ Invalid Ticket!"
 
     return render_template("exit.html")
 
-app.run(debug=True)
+# ▶️ RUN
+if __name__ == "__main__":
+    app.run(debug=True)
