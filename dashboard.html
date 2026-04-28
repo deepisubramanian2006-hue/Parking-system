@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Parking Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h2>🚗 Smart Parking Dashboard</h2>
+
+<a href="/entry"><button class="btn">Vehicle Entry</button></a>
+<a href="/exit"><button class="btn">Vehicle Exit</button></a>
+
+<div class="container">
+
+{% for floor, types in data.floors.items() %}
+    <div class="card">
+        <h3>Floor {{floor}}</h3>
+
+        <p>2W: 
+        <span class="{{ 'free' if types['2W'] > 0 else 'full' }}">
+            {{types["2W"]}}
+        </span>
+        </p>
+
+        <p>4W: 
+        <span class="{{ 'free' if types['4W'] > 0 else 'full' }}">
+            {{types["4W"]}}
+        </span>
+        </p>
+    </div>
+{% endfor %}
+
+</div>
+
+<h3>Direction Guidance</h3>
+
+<div>
+    <span class="arrow">⬅️ LEFT</span>
+    <span class="arrow">⬆️ STRAIGHT</span>
+    <span class="arrow">➡️ RIGHT</span>
+</div>
+
+</body>
+</html>
